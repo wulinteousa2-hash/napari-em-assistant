@@ -49,6 +49,31 @@ def test_opencv_clahe_uint16_shape_and_dtype():
     assert result.dtype == image.dtype
 
 
+def test_imagej_reference_clahe_uint8_shape_dtype_and_no_warning(recwarn):
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.imagej_clahe import (
+        apply_imagej_clahe,
+    )
+
+    image = np.tile(np.arange(64, dtype=np.uint8), (64, 1))
+    result = apply_imagej_clahe(image, block_size=15, fast=True)
+
+    assert len(recwarn) == 0
+    assert result.shape == image.shape
+    assert result.dtype == image.dtype
+
+
+def test_imagej_reference_exact_path_uint16_shape_dtype():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.imagej_clahe import (
+        apply_imagej_clahe,
+    )
+
+    image = np.tile(np.arange(16, dtype=np.uint16), (16, 1)) * 1024
+    result = apply_imagej_clahe(image, block_size=7, fast=False)
+
+    assert result.shape == image.shape
+    assert result.dtype == image.dtype
+
+
 def test_3d_image_raises_value_error():
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
         apply_opencv_clahe,

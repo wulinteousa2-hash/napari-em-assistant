@@ -30,9 +30,8 @@ The widget can:
 
 ## Backends
 
-- `imagej_reference`: stable target API for ImageJ/Fiji-compatible behavior.
-  It currently delegates to the OpenCV approximation and emits a compatibility
-  warning until validated against Fiji output.
+- `imagej_reference`: Python implementation ported from Fiji's
+  `mpicbg.ij.clahe.PlugIn` 2D grayscale CLAHE path.
 - `opencv_cpu`: fast CPU approximation using `cv2.createCLAHE`.
 - `gpu_cupy`: optional CuPy/CUDA batch backend. If CuPy or a CUDA device is not
   available, it falls back to `opencv_cpu`.
@@ -40,8 +39,8 @@ The widget can:
   `NotImplementedError`.
 
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
-Current OpenCV and CuPy paths should be treated as practical approximations,
-not validated Fiji-equivalent output.
+Use `imagej_reference` when Fiji-style output is the priority. Current OpenCV
+and CuPy paths should be treated as practical approximations.
 
 ## Install
 
@@ -84,6 +83,7 @@ an output folder, select a backend, and run the batch. Outputs are saved as:
 The current implementation is tested for:
 
 - widget and backend imports
+- Fiji-derived `imagej_reference` fast and exact paths
 - OpenCV CLAHE on synthetic `uint8` and `uint16` images
 - shape preservation
 - dtype preservation where possible

@@ -13,9 +13,10 @@ for 2D grayscale EM images in napari.
 
 ## Backends
 
-- `imagej_reference`: target API for ImageJ/Fiji-compatible behavior. At this
-  stage it delegates to the OpenCV CPU approximation and emits a compatibility
-  warning.
+- `imagej_reference`: Python implementation ported from Fiji's
+  `mpicbg.ij.clahe.PlugIn` 2D grayscale path. Fiji displays `block size` as
+  `2 * blockRadius + 1` and `histogram bins` as `bins + 1`; this backend keeps
+  the user-facing Fiji parameters and converts them internally the same way.
 - `opencv_cpu`: fast CPU approximation implemented with `cv2.createCLAHE`.
 - `gpu_cupy`: optional CUDA/CuPy approximation for batch processing. If CuPy or
   a CUDA device is unavailable, it falls back to `opencv_cpu`.
@@ -26,8 +27,8 @@ for 2D grayscale EM images in napari.
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
 `block size` is converted to an OpenCV tile grid size, and `maximum slope` is
 used as an approximate `clipLimit`. This backend is useful for fast local
-contrast enhancement, but output should not be treated as validated against Fiji
-until reference comparisons are added.
+contrast enhancement. Use `imagej_reference` when Fiji-style output is the
+priority.
 
 ## GPU Batch Processing
 
@@ -47,6 +48,6 @@ wheel manually and keep the base napari plugin install CPU-only.
 
 ## Future Plan
 
-The module is organized as a task package so validated ImageJ-compatible CPU
-behavior and more accurate GPU interpolation can be added without changing the
-widget contract.
+The module is organized as a task package so broader ImageJ-compatible behavior
+and more accurate GPU interpolation can be added without changing the widget
+contract.
