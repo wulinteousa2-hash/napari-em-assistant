@@ -32,6 +32,11 @@ priority.
 
 ## GPU Batch Processing
 
+The widget includes a CUDA status bar above the parameters. It reports:
+
+- `CuPy`: whether the GPU CuPy backend can currently see a CUDA device.
+- `OpenCV CUDA CLAHE`: whether the installed OpenCV build exposes CUDA CLAHE.
+
 The `gpu_cupy` backend is intended for large TIFF batches. It processes images
 or stacks one file at a time, reports load/process progress to the widget table,
 and saves outputs as `<stem>_clahe.tif`.

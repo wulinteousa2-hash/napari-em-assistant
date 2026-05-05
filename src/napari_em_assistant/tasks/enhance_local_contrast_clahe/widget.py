@@ -28,7 +28,7 @@ from qtpy.QtWidgets import (
 )
 
 from .batch import batch_apply_clahe
-from .gpu_clahe import apply_gpu_cupy_clahe
+from .gpu_clahe import apply_gpu_cupy_clahe, gpu_status_summary
 from .imagej_clahe import apply_imagej_clahe
 from .opencv_clahe import apply_opencv_clahe
 
@@ -59,6 +59,16 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
             label = QLabel(text)
             label.setToolTip(tooltip)
             return label
+
+        self.gpu_status_bar = QLabel("")
+        self.gpu_status_bar.setWordWrap(True)
+        self.gpu_status_bar.setToolTip(
+            "CUDA availability for CLAHE acceleration. CuPy CUDA is used by "
+            "the GPU CuPy backend; OpenCV CUDA CLAHE is shown for environment "
+            "diagnostics and future backend work."
+        )
+        layout.addWidget(self.gpu_status_bar)
+        self._update_gpu_status_bar()
 
         form = QFormLayout()
         self.block_size = QSpinBox()
@@ -225,6 +235,29 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
                 self.viewer.layers.events.changed.connect(self._refresh_mask_layers)
             except Exception:
                 pass
+
+    def _update_gpu_status_bar(self):
+        status = gpu_status_summary()
+        cupy_on = status["cupy_cuda"]
+        opencv_on = status["opencv_cuda_clahe"]
+        any_cuda = cupy_on or opencv_on
+        self.gpu_status_bar.setText(
+            "CUDA: {overall} | CuPy: {cupy} | OpenCV CUDA CLAHE: {opencv}".format(
+                overall="ON" if any_cuda else "OFF",
+                cupy="ON" if cupy_on else "OFF",
+                opencv="ON" if opencv_on else "OFF",
+            )
+        )
+        if any_cuda:
+            self.gpu_status_bar.setStyleSheet(
+                "QLabel { background-color: #1f7a3a; color: white; "
+                "font-weight: 600; padding: 4px 8px; border-radius: 3px; }"
+            )
+        else:
+            self.gpu_status_bar.setStyleSheet(
+                "QLabel { background-color: #8a1f1f; color: white; "
+                "font-weight: 600; padding: 4px 8px; border-radius: 3px; }"
+            )
 
     def _show_error(self, message: str):
         QMessageBox.warning(self, "Enhance Local Contrast CLAHE", message)

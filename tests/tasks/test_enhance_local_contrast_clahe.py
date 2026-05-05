@@ -44,6 +44,51 @@ def test_widget_backend_defaults_to_opencv_cpu():
     assert widget.backend.count() == 3
 
 
+def test_widget_gpu_status_bar_uses_summary(monkeypatch):
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from qtpy.QtWidgets import QApplication
+
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe import widget as widget_module
+
+    monkeypatch.setattr(
+        widget_module,
+        "gpu_status_summary",
+        lambda: {"cupy_cuda": False, "opencv_cuda_clahe": True},
+    )
+    app = QApplication.instance() or QApplication([])
+    widget = widget_module.EnhanceLocalContrastCLAHEWidget()
+
+    assert app is not None
+    assert "CUDA: ON" in widget.gpu_status_bar.text()
+    assert "CuPy: OFF" in widget.gpu_status_bar.text()
+    assert "OpenCV CUDA CLAHE: ON" in widget.gpu_status_bar.text()
+
+
+def test_opencv_cuda_detector_false_without_cuda(monkeypatch):
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe import gpu_clahe
+
+    class FakeCuda:
+        @staticmethod
+        def getCudaEnabledDeviceCount():
+            return 0
+
+        @staticmethod
+        def createCLAHE():
+            return None
+
+    class FakeCv2:
+        cuda = FakeCuda()
+
+        @staticmethod
+        def getBuildInformation():
+            return "NVIDIA CUDA"
+
+    monkeypatch.setitem(__import__("sys").modules, "cv2", FakeCv2)
+
+    assert gpu_clahe.has_opencv_cuda_clahe() is False
+
+
 def test_opencv_clahe_uint8_shape_and_dtype():
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
         apply_opencv_clahe,

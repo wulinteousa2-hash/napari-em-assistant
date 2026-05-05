@@ -22,6 +22,7 @@ grayscale stacks. It follows the ImageJ/Fiji dialog shape and default values:
 
 The widget can:
 
+- show a top CUDA status bar for CuPy CUDA and OpenCV CUDA CLAHE availability
 - preview CLAHE on the active image layer
 - apply CLAHE to the active 2D image layer or 3D grayscale stack
 - create a new layer named `<source_layer_name>_CLAHE`
@@ -36,6 +37,10 @@ The widget can:
   slice-by-slice.
 - `gpu_cupy`: optional CuPy/CUDA batch backend. If CuPy or a CUDA device is not
   available, it falls back to `opencv_cpu`.
+
+The CUDA status bar is diagnostic: `CuPy` indicates whether the GPU CuPy backend
+can run on CUDA now, while `OpenCV CUDA CLAHE` reports whether the installed
+OpenCV build exposes CUDA CLAHE support.
 
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
 Use `imagej_reference` when Fiji-style output is the priority. Current OpenCV

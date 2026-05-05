@@ -41,6 +41,28 @@ def is_gpu_cupy_available() -> bool:
     return _load_cupy() is not None
 
 
+def has_opencv_cuda_clahe() -> bool:
+    try:
+        import cv2
+
+        return (
+            hasattr(cv2, "cuda")
+            and cv2.cuda.getCudaEnabledDeviceCount() > 0
+            and hasattr(cv2.cuda, "createCLAHE")
+            and "NVIDIA CUDA" in cv2.getBuildInformation()
+        )
+    except Exception:
+        return False
+
+
+def gpu_status_summary() -> dict[str, bool]:
+    """Return GPU availability flags used by the widget status indicator."""
+    return {
+        "cupy_cuda": is_gpu_cupy_available(),
+        "opencv_cuda_clahe": has_opencv_cuda_clahe(),
+    }
+
+
 def _as_uint_working_array(cp, image: np.ndarray):
     if image.dtype == np.uint8:
         return cp.asarray(image), np.uint8, 0.0, 255.0
