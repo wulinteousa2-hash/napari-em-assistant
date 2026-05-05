@@ -56,38 +56,79 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
     def _build_ui(self):
         layout = QVBoxLayout(self)
 
+        def tooltip_label(text: str, tooltip: str) -> QLabel:
+            label = QLabel(text)
+            label.setToolTip(tooltip)
+            return label
+
         form = QFormLayout()
         self.block_size = QSpinBox()
         self.block_size.setRange(3, 9999)
         self.block_size.setSingleStep(2)
         self.block_size.setValue(127)
-        form.addRow("block size", self.block_size)
+        block_size_tip = (
+            "ImageJ-style local neighborhood size in pixels. Use odd values; "
+            "larger values smooth contrast over broader EM structures."
+        )
+        self.block_size.setToolTip(block_size_tip)
+        form.addRow(tooltip_label("block size", block_size_tip), self.block_size)
 
         self.histogram_bins = QComboBox()
         for value in (128, 256, 512, 1024):
             self.histogram_bins.addItem(str(value), value)
         self.histogram_bins.setCurrentText("256")
-        form.addRow("histogram bins", self.histogram_bins)
+        histogram_bins_tip = (
+            "Number of bins used for each local histogram. 256 matches the "
+            "ImageJ/Fiji default and is usually a good EM starting point."
+        )
+        self.histogram_bins.setToolTip(histogram_bins_tip)
+        form.addRow(
+            tooltip_label("histogram bins", histogram_bins_tip),
+            self.histogram_bins,
+        )
 
         self.maximum_slope = QDoubleSpinBox()
         self.maximum_slope.setRange(0.01, 1_000_000.0)
         self.maximum_slope.setDecimals(2)
         self.maximum_slope.setSingleStep(0.1)
         self.maximum_slope.setValue(3.00)
-        form.addRow("maximum slope", self.maximum_slope)
+        maximum_slope_tip = (
+            "ImageJ-style contrast limit. Higher values allow stronger local "
+            "contrast and may amplify noise."
+        )
+        self.maximum_slope.setToolTip(maximum_slope_tip)
+        form.addRow(
+            tooltip_label("maximum slope", maximum_slope_tip),
+            self.maximum_slope,
+        )
 
         self.mask_layer = QComboBox()
         self.mask_layer.addItem("*None*", None)
-        form.addRow("mask", self.mask_layer)
+        mask_tip = (
+            "Optional mask layer. When provided, it must match the image shape; "
+            "pixels outside the mask keep their original values."
+        )
+        self.mask_layer.setToolTip(mask_tip)
+        form.addRow(tooltip_label("mask", mask_tip), self.mask_layer)
 
         self.fast = QCheckBox("fast (less accurate)")
         self.fast.setChecked(True)
-        form.addRow("", self.fast)
+        fast_tip = (
+            "Match the ImageJ/Fiji fast option. This favors speed for preview "
+            "and batch work over the most exact reference behavior."
+        )
+        self.fast.setToolTip(fast_tip)
+        form.addRow(tooltip_label("fast", fast_tip), self.fast)
 
         self.backend = QComboBox()
         for value in ("imagej_reference", "opencv_cpu", "gpu_cupy", "gpu"):
             self.backend.addItem(value, value)
-        form.addRow("backend", self.backend)
+        backend_tip = (
+            "Processing implementation. gpu_cupy uses CUDA when available and "
+            "falls back to opencv_cpu when no usable GPU is found."
+        )
+        self.backend.setToolTip(backend_tip)
+        form.addRow(tooltip_label("backend", backend_tip), self.backend)
         layout.addLayout(form)
 
         batch_form = QFormLayout()
@@ -97,20 +138,35 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.output_folder.setReadOnly(True)
         self.select_input_button = QPushButton("Select Input Folder")
         self.select_output_button = QPushButton("Select Output Folder")
+        input_folder_tip = "Folder containing 2D grayscale TIFF images to process."
+        output_folder_tip = "Folder where <stem>_clahe.tif outputs will be written."
+        self.input_folder.setToolTip(input_folder_tip)
+        self.select_input_button.setToolTip(input_folder_tip)
+        self.output_folder.setToolTip(output_folder_tip)
+        self.select_output_button.setToolTip(output_folder_tip)
         input_row = QHBoxLayout()
         input_row.addWidget(self.input_folder)
         input_row.addWidget(self.select_input_button)
         output_row = QHBoxLayout()
         output_row.addWidget(self.output_folder)
         output_row.addWidget(self.select_output_button)
-        batch_form.addRow("input folder", input_row)
-        batch_form.addRow("output folder", output_row)
+        batch_form.addRow(tooltip_label("input folder", input_folder_tip), input_row)
+        batch_form.addRow(tooltip_label("output folder", output_folder_tip), output_row)
         layout.addLayout(batch_form)
 
         button_row = QHBoxLayout()
         self.apply_button = QPushButton("Apply to Active Layer")
         self.preview_button = QPushButton("Preview")
         self.batch_button = QPushButton("Run Batch")
+        self.apply_button.setToolTip(
+            "Apply CLAHE to the active 2D Image layer and add a new *_CLAHE layer."
+        )
+        self.preview_button.setToolTip(
+            "Create or update a temporary preview layer using the current settings."
+        )
+        self.batch_button.setToolTip(
+            "Process all TIFF files from the input folder into the output folder."
+        )
         button_row.addWidget(self.apply_button)
         button_row.addWidget(self.preview_button)
         button_row.addWidget(self.batch_button)
@@ -119,11 +175,25 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
+        self.progress_bar.setToolTip("Overall batch completion percentage.")
         layout.addWidget(self.progress_bar)
 
         self.batch_table = QTableWidget(0, 5)
         self.batch_table.setHorizontalHeaderLabels(
             ["Image", "Load", "Process", "Status", "Output"]
+        )
+        header_tips = {
+            0: "Input TIFF filename.",
+            1: "Checked after the image is successfully read from disk.",
+            2: "Checked after CLAHE output is written.",
+            3: "Current per-image batch state, including CPU fallback or failures.",
+            4: "Destination TIFF path for the CLAHE result.",
+        }
+        for column, tooltip in header_tips.items():
+            self.batch_table.horizontalHeaderItem(column).setToolTip(tooltip)
+        self.batch_table.setToolTip(
+            "Batch progress table. Load and Process columns are checked as each "
+            "image moves through the pipeline."
         )
         self.batch_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.batch_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
