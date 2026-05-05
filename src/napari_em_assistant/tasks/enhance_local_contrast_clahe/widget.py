@@ -28,16 +28,15 @@ from qtpy.QtWidgets import (
 )
 
 from .batch import batch_apply_clahe
-from .gpu_clahe import apply_gpu_clahe, apply_gpu_cupy_clahe
+from .gpu_clahe import apply_gpu_cupy_clahe
 from .imagej_clahe import apply_imagej_clahe
 from .opencv_clahe import apply_opencv_clahe
 
 
 _BACKENDS = {
-    "imagej_reference": apply_imagej_clahe,
     "opencv_cpu": apply_opencv_clahe,
+    "imagej_reference": apply_imagej_clahe,
     "gpu_cupy": apply_gpu_cupy_clahe,
-    "gpu": apply_gpu_clahe,
 }
 
 
@@ -121,11 +120,16 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         form.addRow(tooltip_label("fast", fast_tip), self.fast)
 
         self.backend = QComboBox()
-        for value in ("imagej_reference", "opencv_cpu", "gpu_cupy", "gpu"):
-            self.backend.addItem(value, value)
+        for label, value in (
+            ("OpenCV CPU (default)", "opencv_cpu"),
+            ("ImageJ/Fiji reference", "imagej_reference"),
+            ("GPU CuPy (falls back to CPU)", "gpu_cupy"),
+        ):
+            self.backend.addItem(label, value)
+        self.backend.setCurrentIndex(0)
         backend_tip = (
-            "Processing implementation. gpu_cupy uses CUDA when available and "
-            "falls back to opencv_cpu when no usable GPU is found."
+            "Processing implementation. OpenCV CPU is the default. GPU CuPy "
+            "uses CUDA when available and falls back to OpenCV CPU otherwise."
         )
         self.backend.setToolTip(backend_tip)
         form.addRow(tooltip_label("backend", backend_tip), self.backend)
@@ -138,7 +142,7 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.output_folder.setReadOnly(True)
         self.select_input_button = QPushButton("Select Input Folder")
         self.select_output_button = QPushButton("Select Output Folder")
-        input_folder_tip = "Folder containing 2D grayscale TIFF images to process."
+        input_folder_tip = "Folder containing 2D images or 3D grayscale TIFF stacks."
         output_folder_tip = "Folder where <stem>_clahe.tif outputs will be written."
         self.input_folder.setToolTip(input_folder_tip)
         self.select_input_button.setToolTip(input_folder_tip)
@@ -159,13 +163,13 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.preview_button = QPushButton("Preview")
         self.batch_button = QPushButton("Run Batch")
         self.apply_button.setToolTip(
-            "Apply CLAHE to the active 2D Image layer and add a new *_CLAHE layer."
+            "Apply CLAHE to the active 2D image or 3D grayscale stack and add a new *_CLAHE layer."
         )
         self.preview_button.setToolTip(
             "Create or update a temporary preview layer using the current settings."
         )
         self.batch_button.setToolTip(
-            "Process all TIFF files from the input folder into the output folder."
+            "Process all 2D images or 3D grayscale TIFF stacks from the input folder."
         )
         button_row.addWidget(self.apply_button)
         button_row.addWidget(self.preview_button)
@@ -259,7 +263,7 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
     def select_input_folder(self):
         input_dir = QFileDialog.getExistingDirectory(
             self,
-            "Select folder with 2D grayscale TIFF files",
+            "Select folder with 2D images or 3D grayscale TIFF stacks",
         )
         if not input_dir:
             return
@@ -325,15 +329,15 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         selected = list(self.viewer.layers.selection)
         layer = selected[-1] if selected else getattr(self.viewer.layers, "selection", None).active
         if layer is None:
-            raise ValueError("Select an active 2D Image layer first.")
+            raise ValueError("Select an active 2D image or 3D grayscale stack first.")
         try:
             from napari.layers import Image
         except Exception:
             Image = None
         if Image is not None and not isinstance(layer, Image):
             raise ValueError("The active layer must be a napari Image layer.")
-        if np.asarray(layer.data).ndim != 2:
-            raise ValueError("CLAHE supports 2D grayscale images only for this MVP.")
+        if np.asarray(layer.data).ndim not in (2, 3):
+            raise ValueError("CLAHE supports 2D images and 3D grayscale stacks.")
         return layer
 
     def _parameters(self):

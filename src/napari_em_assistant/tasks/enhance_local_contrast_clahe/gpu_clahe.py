@@ -1,8 +1,9 @@
 """GPU-oriented CLAHE backend.
 
-The public ``gpu`` backend remains a stub for future validated GPU work. The
-``gpu_cupy`` backend is an optional batch-oriented approximation that uses CuPy
-when available and falls back to the OpenCV CPU approximation otherwise.
+The public ``apply_gpu_clahe`` function remains a developer stub for future
+validated GPU work. The user-facing GPU backend is ``gpu_cupy``: an optional
+batch-oriented approximation that uses CuPy when available and falls back to the
+OpenCV CPU approximation otherwise.
 """
 
 from __future__ import annotations
@@ -84,7 +85,7 @@ def _apply_cupy_nearest_tile_clahe(
 
     array = np.asarray(image)
     if array.ndim != 2:
-        raise ValueError("CLAHE supports 2D grayscale images only for this MVP.")
+        raise ValueError("CuPy CLAHE processes 2D slices; pass 3D stacks through apply_gpu_cupy_clahe.")
     if block_size < 3:
         raise ValueError("block_size must be >= 3.")
     if histogram_bins not in {128, 256, 512, 1024}:
@@ -142,6 +143,25 @@ def apply_gpu_cupy_clahe(
     approximation by default. The CuPy path currently uses nearest-tile mapping
     and is intended as a fast batch backend, not a Fiji-validated reference.
     """
+    array = np.asarray(image)
+    if array.ndim == 3:
+        mask_array = None if mask is None else np.asarray(mask)
+        return np.stack(
+            [
+                apply_gpu_cupy_clahe(
+                    slice_image,
+                    block_size=block_size,
+                    histogram_bins=histogram_bins,
+                    maximum_slope=maximum_slope,
+                    mask=None if mask_array is None else mask_array[index],
+                    fast=fast,
+                    fallback_to_cpu=fallback_to_cpu,
+                )
+                for index, slice_image in enumerate(array)
+            ],
+            axis=0,
+        ).astype(array.dtype, copy=False)
+
     try:
         return _apply_cupy_nearest_tile_clahe(
             image=image,

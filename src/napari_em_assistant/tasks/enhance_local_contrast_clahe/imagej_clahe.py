@@ -23,8 +23,8 @@ def _round_pos(value):
 
 def _validate_inputs(image, block_size, histogram_bins, maximum_slope, mask):
     array = np.asarray(image)
-    if array.ndim != 2:
-        raise ValueError("CLAHE supports 2D grayscale images only for this MVP.")
+    if array.ndim not in (2, 3):
+        raise ValueError("CLAHE supports 2D images and 3D grayscale stacks.")
     if block_size < 3:
         raise ValueError("block_size must be >= 3.")
     if histogram_bins not in _ALLOWED_HISTOGRAM_BINS:
@@ -366,11 +366,29 @@ def apply_imagej_clahe(
     """
     Target backend for ImageJ/Fiji-compatible CLAHE behavior.
 
-    Preserve shape and dtype where possible. Supports 2D grayscale uint8,
-    uint16, and float32. Raises ValueError for unsupported image dimensions or
-    parameters.
+    Preserve shape and dtype where possible. Supports 2D grayscale images and
+    3D grayscale stacks with uint8, uint16, and float32 data. 3D stacks are
+    processed one Z-slice at a time. Raises ValueError for unsupported image
+    dimensions or parameters.
     """
     array = _validate_inputs(image, block_size, histogram_bins, maximum_slope, mask)
+    if array.ndim == 3:
+        mask_array = None if mask is None else np.asarray(mask)
+        return np.stack(
+            [
+                apply_imagej_clahe(
+                    slice_image,
+                    block_size=block_size,
+                    histogram_bins=histogram_bins,
+                    maximum_slope=maximum_slope,
+                    mask=None if mask_array is None else mask_array[index],
+                    fast=fast,
+                )
+                for index, slice_image in enumerate(array)
+            ],
+            axis=0,
+        ).astype(array.dtype, copy=False)
+
     radius = (int(block_size) - 1) // 2
     bins_internal = int(histogram_bins) - 1
     source_byte = _to_fiji_byte_image(array)

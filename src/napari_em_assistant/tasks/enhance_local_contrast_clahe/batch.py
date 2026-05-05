@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from .gpu_clahe import apply_gpu_clahe, apply_gpu_cupy_clahe, is_gpu_cupy_available
+from .gpu_clahe import apply_gpu_cupy_clahe, is_gpu_cupy_available
 from .imagej_clahe import apply_imagej_clahe
 from .io import read_image, write_image
 from .opencv_clahe import apply_opencv_clahe
@@ -12,7 +12,6 @@ _BACKENDS = {
     "imagej_reference": apply_imagej_clahe,
     "opencv_cpu": apply_opencv_clahe,
     "gpu_cupy": apply_gpu_cupy_clahe,
-    "gpu": apply_gpu_clahe,
 }
 
 
@@ -28,14 +27,14 @@ def batch_apply_clahe(
     progress_callback=None,
 ):
     """
-    Batch process 2D grayscale TIFF files.
+    Batch process 2D grayscale TIFF images and 3D grayscale TIFF stacks.
 
     Save outputs as <stem>_clahe.tif.
     """
     results = {"processed": [], "skipped": [], "failed": []}
     if backend not in _BACKENDS:
         raise ValueError(
-            "backend must be one of imagej_reference, opencv_cpu, gpu_cupy, or gpu."
+            "backend must be one of opencv_cpu, imagej_reference, or gpu_cupy."
         )
 
     output_root = Path(output_dir)

@@ -1,7 +1,7 @@
 # Enhance Local Contrast CLAHE
 
 This task adds an ImageJ/Fiji-style **Enhance Local Contrast (CLAHE)** workflow
-for 2D grayscale EM images in napari.
+for 2D grayscale EM images and 3D grayscale stacks in napari.
 
 ## ImageJ-Style Parameters
 
@@ -13,14 +13,14 @@ for 2D grayscale EM images in napari.
 
 ## Backends
 
+- `opencv_cpu`: fast CPU approximation implemented with `cv2.createCLAHE`.
 - `imagej_reference`: Python implementation ported from Fiji's
   `mpicbg.ij.clahe.PlugIn` 2D grayscale path. Fiji displays `block size` as
   `2 * blockRadius + 1` and `histogram bins` as `bins + 1`; this backend keeps
-  the user-facing Fiji parameters and converts them internally the same way.
-- `opencv_cpu`: fast CPU approximation implemented with `cv2.createCLAHE`.
+  the user-facing Fiji parameters and converts them internally the same way. 3D
+  stacks are processed one Z-slice at a time.
 - `gpu_cupy`: optional CUDA/CuPy approximation for batch processing. If CuPy or
   a CUDA device is unavailable, it falls back to `opencv_cpu`.
-- `gpu`: planned backend stub. It raises `NotImplementedError` for now.
 
 ## OpenCV Compatibility Warning
 
@@ -33,8 +33,8 @@ priority.
 ## GPU Batch Processing
 
 The `gpu_cupy` backend is intended for large TIFF batches. It processes images
-one at a time, reports load/process progress to the widget table, and saves
-outputs as `<stem>_clahe.tif`.
+or stacks one file at a time, reports load/process progress to the widget table,
+and saves outputs as `<stem>_clahe.tif`.
 
 CuPy is optional because CUDA package compatibility depends on the local driver
 and CUDA runtime. The package exposes a convenience extra:

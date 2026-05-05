@@ -13,8 +13,8 @@ _ALLOWED_HISTOGRAM_BINS = {128, 256, 512, 1024}
 
 def _validate_common(image, block_size, histogram_bins, maximum_slope, mask=None):
     array = np.asarray(image)
-    if array.ndim != 2:
-        raise ValueError("CLAHE supports 2D grayscale images only for this MVP.")
+    if array.ndim not in (2, 3):
+        raise ValueError("CLAHE supports 2D images and 3D grayscale stacks.")
     if block_size < 3:
         raise ValueError("block_size must be >= 3.")
     if histogram_bins not in _ALLOWED_HISTOGRAM_BINS:
@@ -104,6 +104,22 @@ def apply_opencv_clahe(
     Preserve shape and dtype where possible.
     """
     array = _validate_common(image, block_size, histogram_bins, maximum_slope, mask)
+    if array.ndim == 3:
+        mask_array = None if mask is None else np.asarray(mask)
+        return np.stack(
+            [
+                apply_opencv_clahe(
+                    slice_image,
+                    block_size=block_size,
+                    histogram_bins=histogram_bins,
+                    maximum_slope=maximum_slope,
+                    mask=None if mask_array is None else mask_array[index],
+                    fast=fast,
+                )
+                for index, slice_image in enumerate(array)
+            ],
+            axis=0,
+        ).astype(array.dtype, copy=False)
 
     try:
         import cv2
@@ -136,4 +152,3 @@ def apply_opencv_clahe(
         result = np.where(mask_array, result, array).astype(array.dtype, copy=False)
 
     return result
-

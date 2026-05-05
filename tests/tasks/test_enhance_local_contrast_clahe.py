@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pytest
 import tifffile
@@ -25,6 +27,23 @@ def test_import_widget_and_backends():
     assert apply_gpu_cupy_clahe is not None
 
 
+def test_widget_backend_defaults_to_opencv_cpu():
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from qtpy.QtWidgets import QApplication
+
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.widget import (
+        EnhanceLocalContrastCLAHEWidget,
+    )
+
+    app = QApplication.instance() or QApplication([])
+    widget = EnhanceLocalContrastCLAHEWidget()
+
+    assert app is not None
+    assert widget.backend.currentData() == "opencv_cpu"
+    assert widget.backend.count() == 3
+
+
 def test_opencv_clahe_uint8_shape_and_dtype():
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
         apply_opencv_clahe,
@@ -49,6 +68,21 @@ def test_opencv_clahe_uint16_shape_and_dtype():
     assert result.dtype == image.dtype
 
 
+def test_opencv_clahe_3d_stack_shape_and_dtype():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
+        apply_opencv_clahe,
+    )
+
+    image = np.stack(
+        [np.tile(np.arange(32, dtype=np.uint8), (32, 1)) for _ in range(3)],
+        axis=0,
+    )
+    result = apply_opencv_clahe(image, block_size=7)
+
+    assert result.shape == image.shape
+    assert result.dtype == image.dtype
+
+
 def test_imagej_reference_clahe_uint8_shape_dtype_and_no_warning(recwarn):
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.imagej_clahe import (
         apply_imagej_clahe,
@@ -58,6 +92,21 @@ def test_imagej_reference_clahe_uint8_shape_dtype_and_no_warning(recwarn):
     result = apply_imagej_clahe(image, block_size=15, fast=True)
 
     assert len(recwarn) == 0
+    assert result.shape == image.shape
+    assert result.dtype == image.dtype
+
+
+def test_imagej_reference_clahe_3d_stack_shape_and_dtype():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.imagej_clahe import (
+        apply_imagej_clahe,
+    )
+
+    image = np.stack(
+        [np.tile(np.arange(32, dtype=np.uint8), (32, 1)) for _ in range(2)],
+        axis=0,
+    )
+    result = apply_imagej_clahe(image, block_size=7, fast=True)
+
     assert result.shape == image.shape
     assert result.dtype == image.dtype
 
@@ -74,13 +123,13 @@ def test_imagej_reference_exact_path_uint16_shape_dtype():
     assert result.dtype == image.dtype
 
 
-def test_3d_image_raises_value_error():
+def test_4d_image_raises_value_error():
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
         apply_opencv_clahe,
     )
 
-    image = np.zeros((4, 16, 16), dtype=np.uint8)
-    with pytest.raises(ValueError, match="2D grayscale"):
+    image = np.zeros((2, 3, 16, 16), dtype=np.uint8)
+    with pytest.raises(ValueError, match="2D images and 3D grayscale stacks"):
         apply_opencv_clahe(image)
 
 

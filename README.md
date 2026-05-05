@@ -11,8 +11,8 @@ CLAHE.
 
 ### Enhance Local Contrast CLAHE
 
-The CLAHE task provides a napari widget for 2D grayscale EM images. It follows
-the ImageJ/Fiji dialog shape and default values:
+The CLAHE task provides a napari widget for 2D grayscale EM images and 3D
+grayscale stacks. It follows the ImageJ/Fiji dialog shape and default values:
 
 - block size: `127`
 - histogram bins: `256`
@@ -23,20 +23,19 @@ the ImageJ/Fiji dialog shape and default values:
 The widget can:
 
 - preview CLAHE on the active image layer
-- apply CLAHE to the active 2D image layer
+- apply CLAHE to the active 2D image layer or 3D grayscale stack
 - create a new layer named `<source_layer_name>_CLAHE`
 - batch process TIFF folders to an output folder
 - show batch progress with load/process checks, status, and output path
 
 ## Backends
 
-- `imagej_reference`: Python implementation ported from Fiji's
-  `mpicbg.ij.clahe.PlugIn` 2D grayscale CLAHE path.
 - `opencv_cpu`: fast CPU approximation using `cv2.createCLAHE`.
+- `imagej_reference`: Python implementation ported from Fiji's
+  `mpicbg.ij.clahe.PlugIn` 2D grayscale CLAHE path. 3D stacks are processed
+  slice-by-slice.
 - `gpu_cupy`: optional CuPy/CUDA batch backend. If CuPy or a CUDA device is not
   available, it falls back to `opencv_cpu`.
-- `gpu`: reserved stub for future validated GPU work. It raises
-  `NotImplementedError`.
 
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
 Use `imagej_reference` when Fiji-style output is the priority. Current OpenCV
@@ -68,11 +67,12 @@ After installation, open napari and choose:
 Plugins > Enhance Local Contrast CLAHE
 ```
 
-For interactive use, select a 2D grayscale image layer and use `Preview` or
-`Apply to Active Layer`.
+For interactive use, select a 2D grayscale image layer or 3D grayscale stack and
+use `Preview` or `Apply to Active Layer`.
 
-For batch use, choose an input folder containing `.tif` or `.tiff` files, choose
-an output folder, select a backend, and run the batch. Outputs are saved as:
+For batch use, choose an input folder containing 2D images or 3D grayscale
+stacks saved as `.tif` or `.tiff` files, choose an output folder, select a
+backend, and run the batch. Outputs are saved as:
 
 ```text
 <stem>_clahe.tif
@@ -87,7 +87,7 @@ The current implementation is tested for:
 - OpenCV CLAHE on synthetic `uint8` and `uint16` images
 - shape preservation
 - dtype preservation where possible
-- 3D image rejection
+- 3D stack support
 - GPU stub behavior
 - `gpu_cupy` CPU fallback behavior
 - batch result and progress reporting
