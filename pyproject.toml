@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "napari-em-assistant"
+version = "0.1.0"
+description = "Task-based EM image processing assistant for napari."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "BSD-3-Clause"}
+authors = [
+    {name = "napari-em-assistant contributors"},
+]
+dependencies = [
+    "numpy",
+    "tifffile",
+    "qtpy",
+    "napari",
+    "opencv-python-headless",
+]
+
+[project.entry-points."napari.manifest"]
+napari-em-assistant = "napari_em_assistant:napari.yaml"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+napari_em_assistant = ["napari.yaml", "tasks/enhance_local_contrast_clahe/README.md"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
