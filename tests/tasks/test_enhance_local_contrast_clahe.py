@@ -42,9 +42,11 @@ def test_widget_backend_defaults_to_opencv_cpu():
     assert app is not None
     assert widget.backend.currentData() == "opencv_cpu"
     assert widget.backend.count() == 3
+    assert widget.fast.isEnabled() is False
+    assert widget.gpu_status_bar.text() == "Acceleration: CPU"
 
 
-def test_widget_gpu_status_bar_uses_summary(monkeypatch):
+def test_widget_acceleration_bar_uses_summary(monkeypatch):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
     from qtpy.QtWidgets import QApplication
@@ -58,11 +60,32 @@ def test_widget_gpu_status_bar_uses_summary(monkeypatch):
     )
     app = QApplication.instance() or QApplication([])
     widget = widget_module.EnhanceLocalContrastCLAHEWidget()
+    widget.backend.setCurrentIndex(widget.backend.findData("gpu_cupy"))
 
     assert app is not None
-    assert "CUDA: ON" in widget.gpu_status_bar.text()
-    assert "CuPy: OFF" in widget.gpu_status_bar.text()
-    assert "OpenCV CUDA CLAHE: ON" in widget.gpu_status_bar.text()
+    assert widget.gpu_status_bar.text() == "Acceleration: CPU fallback"
+    assert "CuPy CUDA: not available" in widget.gpu_status_bar.toolTip()
+    assert "OpenCV CUDA CLAHE: available" in widget.gpu_status_bar.toolTip()
+
+
+def test_fast_checkbox_only_enabled_for_imagej_reference():
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+
+    from qtpy.QtWidgets import QApplication
+
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.widget import (
+        EnhanceLocalContrastCLAHEWidget,
+    )
+
+    app = QApplication.instance() or QApplication([])
+    widget = EnhanceLocalContrastCLAHEWidget()
+    assert app is not None
+
+    widget.backend.setCurrentIndex(widget.backend.findData("imagej_reference"))
+    assert widget.fast.isEnabled() is True
+
+    widget.backend.setCurrentIndex(widget.backend.findData("gpu_cupy"))
+    assert widget.fast.isEnabled() is False
 
 
 def test_opencv_cuda_detector_false_without_cuda(monkeypatch):

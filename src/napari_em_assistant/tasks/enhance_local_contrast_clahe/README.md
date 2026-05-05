@@ -18,9 +18,10 @@ for 2D grayscale EM images and 3D grayscale stacks in napari.
   `mpicbg.ij.clahe.PlugIn` 2D grayscale path. Fiji displays `block size` as
   `2 * blockRadius + 1` and `histogram bins` as `bins + 1`; this backend keeps
   the user-facing Fiji parameters and converts them internally the same way. 3D
-  stacks are processed one Z-slice at a time.
-- `gpu_cupy`: optional CUDA/CuPy approximation for batch processing. If CuPy or
-  a CUDA device is unavailable, it falls back to `opencv_cpu`.
+  stacks are processed one Z-slice at a time. The `fast` checkbox only affects
+  this backend.
+- `gpu_cupy`: experimental CUDA/CuPy approximation for batch processing. If
+  CuPy or a CUDA device is unavailable, it falls back to `opencv_cpu`.
 
 ## OpenCV Compatibility Warning
 
@@ -32,14 +33,24 @@ priority.
 
 ## GPU Batch Processing
 
-The widget includes a CUDA status bar above the parameters. It reports:
+The widget includes an acceleration status bar above the parameters. It reports
+the active mode:
 
-- `CuPy`: whether the GPU CuPy backend can currently see a CUDA device.
-- `OpenCV CUDA CLAHE`: whether the installed OpenCV build exposes CUDA CLAHE.
+- `Acceleration: CPU`
+- `Acceleration: CUDA via CuPy`
+- `Acceleration: CPU fallback`
+
+Detailed CuPy and OpenCV CUDA CLAHE availability is shown in the status bar
+tooltip for diagnostics.
 
 The `gpu_cupy` backend is intended for large TIFF batches. It processes images
 or stacks one file at a time, reports load/process progress to the widget table,
 and saves outputs as `<stem>_clahe.tif`.
+
+In the current implementation, `gpu_cupy` can be slower than `opencv_cpu` for
+many images because data transfer and Python/CuPy orchestration overhead can
+outweigh GPU work. It is kept as an experimental path for future optimized batch
+kernels, not as the default backend.
 
 CuPy is optional because CUDA package compatibility depends on the local driver
 and CUDA runtime. The package exposes a convenience extra:

@@ -63,12 +63,10 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.gpu_status_bar = QLabel("")
         self.gpu_status_bar.setWordWrap(True)
         self.gpu_status_bar.setToolTip(
-            "CUDA availability for CLAHE acceleration. CuPy CUDA is used by "
-            "the GPU CuPy backend; OpenCV CUDA CLAHE is shown for environment "
-            "diagnostics and future backend work."
+            "Active acceleration mode. OpenCV CPU is usually fastest today. "
+            "GPU CuPy is experimental and falls back to CPU when CUDA is not available."
         )
         layout.addWidget(self.gpu_status_bar)
-        self._update_gpu_status_bar()
 
         form = QFormLayout()
         self.block_size = QSpinBox()
@@ -123,8 +121,8 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.fast = QCheckBox("fast (less accurate)")
         self.fast.setChecked(True)
         fast_tip = (
-            "Match the ImageJ/Fiji fast option. This favors speed for preview "
-            "and batch work over the most exact reference behavior."
+            "ImageJ/Fiji reference backend only. Checked uses Fiji's faster "
+            "interpolated path; unchecked uses the slower exact sliding-window path."
         )
         self.fast.setToolTip(fast_tip)
         form.addRow(tooltip_label("fast", fast_tip), self.fast)
@@ -133,13 +131,14 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         for label, value in (
             ("OpenCV CPU (default)", "opencv_cpu"),
             ("ImageJ/Fiji reference", "imagej_reference"),
-            ("GPU CuPy (falls back to CPU)", "gpu_cupy"),
+            ("GPU CuPy experimental", "gpu_cupy"),
         ):
             self.backend.addItem(label, value)
         self.backend.setCurrentIndex(0)
         backend_tip = (
-            "Processing implementation. OpenCV CPU is the default. GPU CuPy "
-            "uses CUDA when available and falls back to OpenCV CPU otherwise."
+            "Processing implementation. OpenCV CPU is the default and usually "
+            "fastest. ImageJ/Fiji reference prioritizes Fiji-style behavior. "
+            "GPU CuPy is experimental and may be slower for typical image sizes."
         )
         self.backend.setToolTip(backend_tip)
         form.addRow(tooltip_label("backend", backend_tip), self.backend)
@@ -223,9 +222,11 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
 
         self.apply_button.clicked.connect(self.apply_to_active_layer)
         self.preview_button.clicked.connect(self.preview)
+        self.backend.currentIndexChanged.connect(self._on_backend_changed)
         self.select_input_button.clicked.connect(self.select_input_folder)
         self.select_output_button.clicked.connect(self.select_output_folder)
         self.batch_button.clicked.connect(self.batch_process_folder)
+        self._on_backend_changed()
 
         self._refresh_mask_layers()
         if self.viewer is not None:
@@ -239,25 +240,48 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
     def _update_gpu_status_bar(self):
         status = gpu_status_summary()
         cupy_on = status["cupy_cuda"]
-        opencv_on = status["opencv_cuda_clahe"]
-        any_cuda = cupy_on or opencv_on
-        self.gpu_status_bar.setText(
-            "CUDA: {overall} | CuPy: {cupy} | OpenCV CUDA CLAHE: {opencv}".format(
-                overall="ON" if any_cuda else "OFF",
-                cupy="ON" if cupy_on else "OFF",
-                opencv="ON" if opencv_on else "OFF",
-            )
-        )
-        if any_cuda:
+        backend = self.backend.currentData() if hasattr(self, "backend") else "opencv_cpu"
+        if backend == "gpu_cupy" and cupy_on:
+            self.gpu_status_bar.setText("Acceleration: CUDA via CuPy")
             self.gpu_status_bar.setStyleSheet(
                 "QLabel { background-color: #1f7a3a; color: white; "
                 "font-weight: 600; padding: 4px 8px; border-radius: 3px; }"
             )
-        else:
+        elif backend == "gpu_cupy":
+            self.gpu_status_bar.setText("Acceleration: CPU fallback")
             self.gpu_status_bar.setStyleSheet(
-                "QLabel { background-color: #8a1f1f; color: white; "
+                "QLabel { background-color: #8a5a00; color: white; "
                 "font-weight: 600; padding: 4px 8px; border-radius: 3px; }"
             )
+        else:
+            self.gpu_status_bar.setText("Acceleration: CPU")
+            self.gpu_status_bar.setStyleSheet(
+                "QLabel { background-color: #4b5563; color: white; "
+                "font-weight: 600; padding: 4px 8px; border-radius: 3px; }"
+            )
+        self.gpu_status_bar.setToolTip(
+            "CuPy CUDA: {cupy}. OpenCV CUDA CLAHE: {opencv}. GPU CuPy is "
+            "experimental; OpenCV CPU is the default because it is typically "
+            "faster for current CLAHE workloads.".format(
+                cupy="available" if cupy_on else "not available",
+                opencv="available" if status["opencv_cuda_clahe"] else "not available",
+            )
+        )
+
+    def _on_backend_changed(self):
+        is_imagej = self.backend.currentData() == "imagej_reference"
+        self.fast.setEnabled(is_imagej)
+        if is_imagej:
+            self.fast.setToolTip(
+                "ImageJ/Fiji reference backend only. Checked uses Fiji's faster "
+                "interpolated path; unchecked uses the slower exact sliding-window path."
+            )
+        else:
+            self.fast.setToolTip(
+                "Fast/exact only changes the ImageJ/Fiji reference backend. "
+                "OpenCV CPU and GPU CuPy ignore this option."
+            )
+        self._update_gpu_status_bar()
 
     def _show_error(self, message: str):
         QMessageBox.warning(self, "Enhance Local Contrast CLAHE", message)

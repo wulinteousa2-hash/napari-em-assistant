@@ -30,11 +30,12 @@ def _load_cupy():
     try:
         if cp.cuda.runtime.getDeviceCount() < 1:
             return None
-        cp.cuda.runtime.getDevice(0)
+        cp.cuda.Device(0).use()
+        cp.cuda.runtime.free(0)
     except Exception:
         return None
-    return cp
 
+    return cp
 
 def is_gpu_cupy_available() -> bool:
     """Return True when CuPy can see at least one CUDA device."""
