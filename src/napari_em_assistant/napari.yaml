@@ -1,5 +1,6 @@
 name: napari-em-assistant
 display_name: napari EM Assistant
+visibility: public
 contributions:
   commands:
     - id: napari-em-assistant.make_clahe_widget
@@ -7,5 +8,5 @@ contributions:
       python_name: napari_em_assistant.tasks.enhance_local_contrast_clahe.widget:EnhanceLocalContrastCLAHEWidget
   widgets:
     - command: napari-em-assistant.make_clahe_widget
-      display_name: Enhance Local Contrast CLAHE
+      display_name: CLAHE
 
