@@ -1,6 +1,8 @@
 name: napari-em-assistant
 display_name: napari EM Assistant
 visibility: public
+categories:
+  - Utilities
 contributions:
   commands:
     - id: napari-em-assistant.make_clahe_widget
