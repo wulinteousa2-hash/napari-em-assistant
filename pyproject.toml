@@ -44,6 +44,3 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 napari_em_assistant = ["napari.yaml"]
-
-[tool.setuptools.packages.find]
-where = ["src"]
