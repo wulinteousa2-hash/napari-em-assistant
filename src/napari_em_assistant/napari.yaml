@@ -1,5 +1,6 @@
 name: napari-em-assistant
 display_name: napari EM Assistant
+description: Enhance Local Contrast CLAHE for EM images
 visibility: public
 categories:
   - Utilities
