@@ -124,6 +124,46 @@ def test_opencv_clahe_uint8_shape_and_dtype():
     assert result.dtype == image.dtype
 
 
+def test_imagej_slope_to_opencv_cliplimit_mapping():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
+        imagej_slope_to_opencv_cliplimit,
+    )
+
+    assert imagej_slope_to_opencv_cliplimit(1.0) == 0.0
+    assert imagej_slope_to_opencv_cliplimit(2.0) == 0.5
+    assert imagej_slope_to_opencv_cliplimit(3.0) == 1.0
+    assert imagej_slope_to_opencv_cliplimit(5.0) == 2.0
+
+
+def test_opencv_clahe_maximum_slope_at_or_below_one_is_unchanged():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
+        apply_opencv_clahe,
+    )
+
+    image = np.tile(np.arange(64, dtype=np.uint8), (64, 1))
+
+    for maximum_slope in (0.5, 1.0):
+        result = apply_opencv_clahe(
+            image,
+            block_size=15,
+            maximum_slope=maximum_slope,
+        )
+
+        assert np.array_equal(result, image)
+        assert result is not image
+
+
+def test_opencv_clahe_maximum_slope_above_one_changes_image():
+    from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
+        apply_opencv_clahe,
+    )
+
+    image = np.tile(np.arange(64, dtype=np.uint8), (64, 1))
+    result = apply_opencv_clahe(image, block_size=15, maximum_slope=3.0)
+
+    assert not np.array_equal(result, image)
+
+
 def test_opencv_clahe_uint16_shape_and_dtype():
     from napari_em_assistant.tasks.enhance_local_contrast_clahe.opencv_clahe import (
         apply_opencv_clahe,

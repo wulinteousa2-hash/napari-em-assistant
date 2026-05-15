@@ -1,6 +1,6 @@
 name: napari-em-assistant
 display_name: napari EM Assistant
-description: Enhance Local Contrast CLAHE for EM images
+description: EM image processing tools
 visibility: public
 categories:
   - Utilities
@@ -9,7 +9,11 @@ contributions:
     - id: napari-em-assistant.make_clahe_widget
       title: Enhance Local Contrast CLAHE
       python_name: napari_em_assistant.tasks.enhance_local_contrast_clahe.widget:EnhanceLocalContrastCLAHEWidget
+    - id: napari-em-assistant.make_crop_widget
+      title: Crop Image
+      python_name: napari_em_assistant.tasks.crop_image.widget:CropImageWidget
   widgets:
     - command: napari-em-assistant.make_clahe_widget
       display_name: CLAHE
-
+    - command: napari-em-assistant.make_crop_widget
+      display_name: Crop Image

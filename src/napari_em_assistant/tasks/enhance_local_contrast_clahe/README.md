@@ -26,10 +26,11 @@ for 2D grayscale EM images and 3D grayscale stacks in napari.
 ## OpenCV Compatibility Warning
 
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
-`block size` is converted to an OpenCV tile grid size, and `maximum slope` is
-used as an approximate `clipLimit`. This backend is useful for fast local
-contrast enhancement. Use `imagej_reference` when Fiji-style output is the
-priority.
+`block size` is converted to an OpenCV tile grid size, and the plugin rescales
+the ImageJ-style `maximum slope` before passing it as OpenCV `clipLimit` for a
+more ImageJ-like user experience. In the OpenCV backend, `maximum slope` values
+up to `1` apply no enhancement. This backend is useful for fast local contrast
+enhancement. Use `imagej_reference` when Fiji-style output is the priority.
 
 ## GPU Batch Processing
 

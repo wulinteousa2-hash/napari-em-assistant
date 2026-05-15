@@ -52,6 +52,13 @@ def _restore_float32(image: np.ndarray, min_value: float, max_value: float) -> n
     return (restored * (max_value - min_value) + min_value).astype(np.float32)
 
 
+def imagej_slope_to_opencv_cliplimit(maximum_slope: float) -> float:
+    """Map ImageJ-style maximum slope to an OpenCV CLAHE clipLimit."""
+    if maximum_slope <= 1.0:
+        return 0.0
+    return (maximum_slope - 1.0) * 0.5
+
+
 def imagej_params_to_opencv(
     block_size: int,
     histogram_bins: int,
@@ -77,11 +84,9 @@ def imagej_params_to_opencv(
     tiles_y = max(1, int(math.ceil(height / block_size)))
     tiles_x = max(1, int(math.ceil(width / block_size)))
 
-    # OpenCV clipLimit is not ImageJ's maximum slope. This conservative mapping
-    # keeps the user-facing parameter stable while marking the backend approximate.
-    clip_limit = float(maximum_slope)
-    if histogram_bins != 256:
-        clip_limit *= histogram_bins / 256.0
+    # OpenCV clipLimit is not ImageJ's maximum slope. Rescale the user-facing
+    # ImageJ-style value so slope=1 remains neutral in this backend.
+    clip_limit = imagej_slope_to_opencv_cliplimit(maximum_slope)
 
     return {
         "clipLimit": clip_limit,
@@ -104,6 +109,9 @@ def apply_opencv_clahe(
     Preserve shape and dtype where possible.
     """
     array = _validate_common(image, block_size, histogram_bins, maximum_slope, mask)
+    if maximum_slope <= 1.0:
+        return array.copy()
+
     if array.ndim == 3:
         mask_array = None if mask is None else np.asarray(mask)
         return np.stack(

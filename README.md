@@ -4,8 +4,8 @@ Task-based electron microscopy image processing tools for napari.
 
 `napari-em-assistant` is organized around small, explicit processing tasks that
 can be used interactively on an active napari layer or applied to folders of EM
-images. The first task is ImageJ/Fiji-style local contrast enhancement with
-CLAHE.
+images. The first tasks are ImageJ/Fiji-style local contrast enhancement with
+CLAHE and frictionless 2D/3D image cropping.
 
 ## Current Task
 
@@ -44,8 +44,11 @@ The acceleration bar shows the active mode for the selected backend. Detailed
 CuPy/OpenCV CUDA availability is still available in the tooltip for diagnostics.
 
 OpenCV CLAHE parameters are not identical to ImageJ/Fiji CLAHE parameters.
-Use `imagej_reference` when Fiji-style output is the priority. Current OpenCV
-and CuPy paths should be treated as practical approximations.
+The OpenCV backend is faster, but it rescales the ImageJ-style `maximum slope`
+before passing it as OpenCV `clipLimit` for a more ImageJ-like user experience;
+`maximum slope` values up to `1` apply no enhancement in the OpenCV backend. Use
+`imagej_reference` when Fiji-style output is the priority. Current OpenCV and
+CuPy paths should be treated as practical approximations.
 
 ## Install
 
@@ -75,6 +78,29 @@ Plugins > Enhance Local Contrast CLAHE
 
 For interactive use, select a 2D grayscale image layer or 3D grayscale stack and
 use `Preview` or `Apply to Active Layer`.
+
+### Crop Image
+
+The crop task provides a compact widget for 2D images and 3D grayscale stacks.
+It is organized around four imaging workflows: crop by coordinates, crop from a
+drawn ROI, tile by region count, and tile by pixel size. A progress bar reports
+saved or created crop pieces as `completed / total`.
+The widget asks for confirmation before likely mistakes, including very tiny
+crops from a large source image/stack and operations that would save more than
+1000 crop TIFF files.
+
+For detailed step-by-step crop workflows, see
+[src/napari_em_assistant/tasks/crop_image/README.md](src/napari_em_assistant/tasks/crop_image/README.md).
+
+For large images, choose a save folder and use either tiling workflow:
+
+- `Tile by Region Count`: divide an active image or TIFF folder into near-equal
+  `z`, `y`, and `x` regions. For example, `y regions = 2` and `x regions = 3`
+  creates six tiles when `z regions = 1`.
+- `Tile by Pixel Size`: save tiles with the requested output dimensions. For
+  example, a `6000 x 6000 x 500` stack with `z size = 0`, `y size = 2000`, and
+  `x size = 2000` writes nine `500 x 2000 x 2000` stack tiles. `z size = 0`
+  keeps the full Z depth in every tile.
 
 For batch use, choose an input folder containing 2D images or 3D grayscale
 stacks saved as `.tif` or `.tiff` files, choose an output folder, select a

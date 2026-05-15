@@ -101,7 +101,9 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.maximum_slope.setValue(3.00)
         maximum_slope_tip = (
             "ImageJ-style contrast limit. Higher values allow stronger local "
-            "contrast and may amplify noise."
+            "contrast and may amplify noise. In OpenCV CPU mode this value is "
+            "rescaled for a more ImageJ-like response; maximum slope 1 applies "
+            "no enhancement."
         )
         self.maximum_slope.setToolTip(maximum_slope_tip)
         form.addRow(
@@ -137,7 +139,9 @@ class EnhanceLocalContrastCLAHEWidget(QWidget):
         self.backend.setCurrentIndex(0)
         backend_tip = (
             "Processing implementation. OpenCV CPU is the default and usually "
-            "fastest. ImageJ/Fiji reference prioritizes Fiji-style behavior. "
+            "fastest but is not parameter-identical to ImageJ/Fiji; it rescales "
+            "the ImageJ-style maximum slope for a more similar user experience. "
+            "ImageJ/Fiji reference prioritizes Fiji-style behavior. "
             "GPU CuPy is experimental and may be slower for typical image sizes."
         )
         self.backend.setToolTip(backend_tip)
