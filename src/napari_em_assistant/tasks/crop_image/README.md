@@ -10,8 +10,8 @@ The widget is organized into four tabs:
    then preview, create a cropped layer, or save one TIFF crop.
 2. `Crop from Drawn ROI`: draw/select a napari Shapes ROI, choose its Shapes
    layer, then copy its bounds or crop directly.
-3. `Tile by Region Count`: enter how many regions to divide `z`, `y`, and `x`
-   into, then save near-equal TIFF tiles.
+3. `Tile by Total Count`: enter the total number of output tiles wanted, then
+   save near-equal TIFF tiles. The plugin chooses the Y/X grid automatically.
 4. `Tile by Pixel Size`: enter final tile dimensions, such as `512 x 512`, then
    save active-layer or batch TIFF tiles.
 
@@ -44,9 +44,9 @@ has a real Z extent, that Z range is used.
 
 Choose an output folder, then use one of the automatic tabs:
 
-- `Tile by Region Count`: divide each axis into near-equal regions. For example,
-  `y regions = 2`, `x regions = 3`, and `z regions = 1` creates six tiles from
-  a 3D stack while preserving full Z depth.
+- `Tile by Total Count`: enter how many output tiles you want. The plugin
+  chooses a near-even Y/X grid automatically. For example, `6` creates six tiles
+  from a 2D image or six full-depth tiles from a 3D stack.
 - `Tile by Pixel Size`: request the final tile size. For example, a
   `6000 x 6000 x 500` stack with `z size = 0`, `y size = 2000`, and
   `x size = 2000` writes nine `500 x 2000 x 2000` stack tiles. `z size = 0`

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from collections.abc import Sequence
+import math
 
 import numpy as np
 
@@ -236,6 +237,73 @@ def crop_tiles_by_parts(
             x_range=x_range,
         )
         for z_index, z_range in enumerate(z_ranges)
+        for y_index, y_range in enumerate(y_ranges)
+        for x_index, x_range in enumerate(x_ranges)
+    ]
+
+
+def tile_grid_for_count(image_shape: Sequence[int], tile_count: int) -> tuple[int, int]:
+    """
+    Choose a Y/X grid that yields exactly ``tile_count`` tiles.
+
+    The grid keeps tiles close to the source image aspect ratio. For 3D stacks,
+    tiling is still based on the Y/X plane and each output keeps the full Z depth.
+    """
+    if len(image_shape) not in (2, 3):
+        raise ValueError("Crop supports 2D images and 3D grayscale stacks.")
+    if tile_count <= 0:
+        raise ValueError("tile_count must be > 0.")
+
+    y_size = int(image_shape[-2])
+    x_size = int(image_shape[-1])
+    if tile_count > y_size * x_size:
+        raise ValueError("tile_count must be <= number of Y/X pixels.")
+
+    aspect = x_size / y_size
+    best_grid = (tile_count, 1)
+    best_score = float("inf")
+    for y_parts in range(1, int(math.sqrt(tile_count)) + 1):
+        if tile_count % y_parts != 0:
+            continue
+        x_parts = tile_count // y_parts
+        for candidate_y, candidate_x in (
+            (y_parts, x_parts),
+            (x_parts, y_parts),
+        ):
+            if candidate_y > y_size or candidate_x > x_size:
+                continue
+            grid_aspect = candidate_x / candidate_y
+            score = abs(math.log(grid_aspect / aspect))
+            if score < best_score:
+                best_score = score
+                best_grid = (candidate_y, candidate_x)
+    return best_grid
+
+
+def crop_tiles_by_count(image_shape: Sequence[int], tile_count: int) -> list[CropTile]:
+    """
+    Create exactly ``tile_count`` near-even Y/X tiles.
+
+    3D stacks keep the full Z depth in every tile.
+    """
+    y_parts, x_parts = tile_grid_for_count(image_shape, int(tile_count))
+    y_ranges = split_axis_by_parts(int(image_shape[-2]), y_parts)
+    x_ranges = split_axis_by_parts(int(image_shape[-1]), x_parts)
+    if len(image_shape) == 2:
+        return [
+            CropTile(index=(y_index, x_index), z_range=None, y_range=y_range, x_range=x_range)
+            for y_index, y_range in enumerate(y_ranges)
+            for x_index, x_range in enumerate(x_ranges)
+        ]
+
+    z_range = (0, int(image_shape[0]))
+    return [
+        CropTile(
+            index=(0, y_index, x_index),
+            z_range=z_range,
+            y_range=y_range,
+            x_range=x_range,
+        )
         for y_index, y_range in enumerate(y_ranges)
         for x_index, x_range in enumerate(x_ranges)
     ]

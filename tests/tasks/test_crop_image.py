@@ -124,15 +124,26 @@ def test_roi_bounds_from_3d_shape_with_z_extent():
     assert x_range == (2, 6)
 
 
-def test_crop_tiles_by_parts_splits_2d_into_near_equal_tiles():
-    from napari_em_assistant.tasks.crop_image.crop import crop_tiles_by_parts
+def test_crop_tiles_by_count_splits_2d_into_requested_tile_count():
+    from napari_em_assistant.tasks.crop_image.crop import crop_tiles_by_count
 
-    tiles = crop_tiles_by_parts((10, 12), y_parts=2, x_parts=3)
+    tiles = crop_tiles_by_count((10, 12), tile_count=6)
 
     assert len(tiles) == 6
     assert [tile.y_range for tile in tiles[0::3]] == [(0, 5), (5, 10)]
     assert [tile.x_range for tile in tiles[:3]] == [(0, 4), (4, 8), (8, 12)]
     assert all(tile.z_range is None for tile in tiles)
+
+
+def test_crop_tiles_by_count_keeps_full_z_for_3d_stacks():
+    from napari_em_assistant.tasks.crop_image.crop import crop_tiles_by_count
+
+    tiles = crop_tiles_by_count((5, 10, 12), tile_count=6)
+
+    assert len(tiles) == 6
+    assert all(tile.z_range == (0, 5) for tile in tiles)
+    assert [tile.y_range for tile in tiles[0::3]] == [(0, 5), (5, 10)]
+    assert [tile.x_range for tile in tiles[:3]] == [(0, 4), (4, 8), (8, 12)]
 
 
 def test_crop_tiles_by_size_keeps_full_z_by_default():
@@ -220,8 +231,7 @@ def test_batch_crop_tiff_files_by_parts_writes_expected_count(tmp_path):
         [input_path],
         output_dir=output_dir,
         mode="parts",
-        y_parts=2,
-        x_parts=2,
+        tile_count=4,
     )
 
     assert len(paths) == 4
@@ -242,8 +252,7 @@ def test_batch_crop_tiff_files_reports_total_progress(tmp_path):
         input_paths,
         output_dir=tmp_path / "out",
         mode="parts",
-        y_parts=2,
-        x_parts=2,
+        tile_count=4,
         progress_callback=events.append,
     )
 

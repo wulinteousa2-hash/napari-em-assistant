@@ -83,7 +83,7 @@ use `Preview` or `Apply to Active Layer`.
 
 The crop task provides a compact widget for 2D images and 3D grayscale stacks.
 It is organized around four imaging workflows: crop by coordinates, crop from a
-drawn ROI, tile by region count, and tile by pixel size. A progress bar reports
+drawn ROI, tile by total tile count, and tile by pixel size. A progress bar reports
 saved or created crop pieces as `completed / total`.
 The widget asks for confirmation before likely mistakes, including very tiny
 crops from a large source image/stack and operations that would save more than
@@ -94,9 +94,9 @@ For detailed step-by-step crop workflows, see
 
 For large images, choose a save folder and use either tiling workflow:
 
-- `Tile by Region Count`: divide an active image or TIFF folder into near-equal
-  `z`, `y`, and `x` regions. For example, `y regions = 2` and `x regions = 3`
-  creates six tiles when `z regions = 1`.
+- `Tile by Total Count`: enter the total number of output tiles wanted. The
+  plugin chooses a near-even Y/X grid automatically and keeps full Z depth for
+  3D stacks. For example, `6` creates six image tiles.
 - `Tile by Pixel Size`: save tiles with the requested output dimensions. For
   example, a `6000 x 6000 x 500` stack with `z size = 0`, `y size = 2000`, and
   `x size = 2000` writes nine `500 x 2000 x 2000` stack tiles. `z size = 0`

@@ -72,7 +72,7 @@ class CropImageWidget(QWidget):
         self.tabs = QTabWidget()
         self.tabs.addTab(self._manual_tab(), "1. Crop by Coordinates")
         self.tabs.addTab(self._roi_tab(), "2. Crop from Drawn ROI")
-        self.tabs.addTab(self._parts_tab(), "3. Tile by Region Count")
+        self.tabs.addTab(self._parts_tab(), "3. Tile by Total Count")
         self.tabs.addTab(self._size_tab(), "4. Tile by Pixel Size")
         layout.addWidget(self.tabs)
 
@@ -211,22 +211,20 @@ class CropImageWidget(QWidget):
         layout = QVBoxLayout(tab)
         layout.addWidget(
             self._section_label(
-                "Choose how many regions you want along Z, Y, and X. The plugin saves near-equal tiles."
+                "Enter the total number of tiles you want. The plugin chooses an even Y/X grid automatically."
             )
         )
 
-        self.z_parts = self._positive_spinbox(1, 9999, 1)
-        self.y_parts = self._positive_spinbox(1, 9999, 1)
-        self.x_parts = self._positive_spinbox(1, 9999, 1)
+        self.tile_count = self._positive_spinbox(1, 1_000_000, 6)
         form = QFormLayout()
-        form.addRow("regions z/y/x", self._triple_row(self.z_parts, self.y_parts, self.x_parts))
+        form.addRow("total tiles", self.tile_count)
         layout.addLayout(form)
 
         button_row = QHBoxLayout()
         self.export_parts_button = QPushButton("Save Active Image Tiles")
         self.batch_parts_button = QPushButton("Save Folder Image Tiles")
-        self.export_parts_button.setToolTip("Split the active image into near-equal crop TIFF files.")
-        self.batch_parts_button.setToolTip("Split every TIFF in the batch input folder.")
+        self.export_parts_button.setToolTip("Split the active image into this many near-equal crop TIFF files.")
+        self.batch_parts_button.setToolTip("Split every TIFF in the image folder into this many tiles.")
         button_row.addWidget(self.export_parts_button)
         button_row.addWidget(self.batch_parts_button)
         layout.addLayout(button_row)
@@ -458,10 +456,7 @@ class CropImageWidget(QWidget):
                 self._set_range(self.z_start, self.z_end, 1)
                 self._set_range(self.y_start, self.y_end, shape[0])
                 self._set_range(self.x_start, self.x_end, shape[1])
-                self.z_parts.setValue(1)
-                self.z_parts.setMaximum(1)
-                self.y_parts.setMaximum(shape[0])
-                self.x_parts.setMaximum(shape[1])
+                self.tile_count.setMaximum(shape[0] * shape[1])
                 self.z_size.setValue(0)
                 self.z_size.setMaximum(0)
                 self.y_size.setMaximum(shape[0])
@@ -472,9 +467,7 @@ class CropImageWidget(QWidget):
                 self._set_range(self.z_start, self.z_end, shape[0])
                 self._set_range(self.y_start, self.y_end, shape[1])
                 self._set_range(self.x_start, self.x_end, shape[2])
-                self.z_parts.setMaximum(shape[0])
-                self.y_parts.setMaximum(shape[1])
-                self.x_parts.setMaximum(shape[2])
+                self.tile_count.setMaximum(shape[1] * shape[2])
                 self.z_size.setMaximum(shape[0])
                 self.y_size.setMaximum(shape[1])
                 self.x_size.setMaximum(shape[2])
@@ -593,9 +586,7 @@ class CropImageWidget(QWidget):
         z_range, y_range, x_range = self._bounds(2 if ndim is None else ndim)
         return {
             "mode": mode,
-            "z_parts": self.z_parts.value(),
-            "y_parts": self.y_parts.value(),
-            "x_parts": self.x_parts.value(),
+            "tile_count": self.tile_count.value(),
             "z_size": z_size,
             "y_size": self.y_size.value(),
             "x_size": self.x_size.value(),

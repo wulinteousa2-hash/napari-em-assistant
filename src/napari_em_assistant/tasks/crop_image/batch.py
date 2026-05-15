@@ -11,6 +11,7 @@ from .crop import (
     CropTile,
     crop_image_tiles,
     crop_tiles_by_parts,
+    crop_tiles_by_count,
     crop_tiles_by_size,
 )
 
@@ -31,6 +32,7 @@ def crop_tiles_for_shape(
     y_parts: int = 1,
     x_parts: int = 1,
     z_parts: int = 1,
+    tile_count: int | None = None,
     y_size: int | None = None,
     x_size: int | None = None,
     z_size: int | None = None,
@@ -51,6 +53,8 @@ def crop_tiles_for_shape(
             )
         ]
     if mode == "parts":
+        if tile_count is not None:
+            return crop_tiles_by_count(image_shape=image_shape, tile_count=tile_count)
         return crop_tiles_by_parts(
             image_shape=image_shape,
             y_parts=y_parts,
@@ -121,6 +125,7 @@ def export_active_crop_tiles(
     y_parts: int = 1,
     x_parts: int = 1,
     z_parts: int = 1,
+    tile_count: int | None = None,
     y_size: int | None = None,
     x_size: int | None = None,
     z_size: int | None = None,
@@ -138,6 +143,7 @@ def export_active_crop_tiles(
         y_parts=y_parts,
         x_parts=x_parts,
         z_parts=z_parts,
+        tile_count=tile_count,
         y_size=y_size,
         x_size=x_size,
         z_size=z_size,
@@ -163,6 +169,7 @@ def batch_crop_tiff_files(
     y_parts: int = 1,
     x_parts: int = 1,
     z_parts: int = 1,
+    tile_count: int | None = None,
     y_size: int | None = None,
     x_size: int | None = None,
     z_size: int | None = None,
@@ -178,6 +185,7 @@ def batch_crop_tiff_files(
         "y_parts": y_parts,
         "x_parts": x_parts,
         "z_parts": z_parts,
+        "tile_count": tile_count,
         "y_size": y_size,
         "x_size": x_size,
         "z_size": z_size,
