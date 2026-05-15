@@ -70,10 +70,10 @@ class CropImageWidget(QWidget):
         self.x_start, self.x_end = self._axis_spinboxes()
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._manual_tab(), "1. Crop by Coordinates")
-        self.tabs.addTab(self._roi_tab(), "2. Crop from Drawn ROI")
-        self.tabs.addTab(self._parts_tab(), "3. Tile by Total Count")
-        self.tabs.addTab(self._size_tab(), "4. Tile by Pixel Size")
+        self.tabs.addTab(self._roi_tab(), "1. Crop from Drawn ROI")
+        self.tabs.addTab(self._parts_tab(), "2. Tile by Total Count")
+        self.tabs.addTab(self._size_tab(), "3. Tile by Pixel Size")
+        self.tabs.addTab(self._manual_tab(), "4. Crop by Coordinates")
         layout.addWidget(self.tabs)
 
         output_box = QGroupBox("Save Crops to Folder")
@@ -310,7 +310,7 @@ class CropImageWidget(QWidget):
         end.setEnabled(enabled)
 
     def _update_tab_state(self, event=None):
-        manual_active = self.tabs.currentIndex() == 0 if hasattr(self, "tabs") else True
+        manual_active = self.tabs.currentIndex() == 3 if hasattr(self, "tabs") else True
         for spinbox in (self.y_start, self.y_end, self.x_start, self.x_end):
             spinbox.setEnabled(manual_active)
         z_enabled = (
@@ -539,7 +539,7 @@ class CropImageWidget(QWidget):
         self.y_end.setValue(y_range[1])
         self.x_start.setValue(x_range[0])
         self.x_end.setValue(x_range[1])
-        self.tabs.setCurrentIndex(0)
+        self.tabs.setCurrentIndex(3)
         self._update_tab_state()
 
     def use_roi_bounds(self):

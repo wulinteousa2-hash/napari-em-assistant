@@ -6,14 +6,14 @@ This task crops 2D images and 3D grayscale stacks from napari.
 
 The widget is organized into four tabs:
 
-1. `Crop by Coordinates`: type exact `z`, `y`, and `x` start/end coordinates,
-   then preview, create a cropped layer, or save one TIFF crop.
-2. `Crop from Drawn ROI`: draw/select a napari Shapes ROI, choose its Shapes
+1. `Crop from Drawn ROI`: draw/select a napari Shapes ROI, choose its Shapes
    layer, then copy its bounds or crop directly.
-3. `Tile by Total Count`: enter the total number of output tiles wanted, then
+2. `Tile by Total Count`: enter the total number of output tiles wanted, then
    save near-equal TIFF tiles. The plugin chooses the Y/X grid automatically.
-4. `Tile by Pixel Size`: enter final tile dimensions, such as `512 x 512`, then
+3. `Tile by Pixel Size`: enter final tile dimensions, such as `512 x 512`, then
    save active-layer or batch TIFF tiles.
+4. `Crop by Coordinates`: type exact `z`, `y`, and `x` start/end coordinates,
+   then preview, create a cropped layer, or save one TIFF crop.
 
 The progress bar reports created or saved crop pieces as `completed / total`.
 The widget asks for confirmation before likely mistakes, including very tiny

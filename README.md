@@ -82,8 +82,8 @@ use `Preview` or `Apply to Active Layer`.
 ### Crop Image
 
 The crop task provides a compact widget for 2D images and 3D grayscale stacks.
-It is organized around four imaging workflows: crop by coordinates, crop from a
-drawn ROI, tile by total tile count, and tile by pixel size. A progress bar reports
+It is organized around four imaging workflows: crop from a drawn ROI, tile by
+total tile count, tile by pixel size, and advanced coordinate cropping. A progress bar reports
 saved or created crop pieces as `completed / total`.
 The widget asks for confirmation before likely mistakes, including very tiny
 crops from a large source image/stack and operations that would save more than
